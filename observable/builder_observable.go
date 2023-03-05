@@ -2,7 +2,7 @@ package observable
 
 import (
 	"fmt"
-	"simple-sql-builder/constants"
+	"go-simple-sql-builder/constants"
 	"strings"
 )
 
@@ -14,7 +14,7 @@ const (
 )
 
 type SqlObserve struct {
-	query          string
+	query          strings.Builder
 	command        string
 	column         []string
 	value          []any
@@ -91,37 +91,37 @@ func (so *SqlObserve) GetQuery() string {
 				return fmt.Sprintf("EXPECTED COLUMN AGRS:%d BUT GOT:%d", colSize, valSize)
 			}
 			so.buildInsertQuery()
-			return so.query
+			return so.query.String()
 		}
 		if so.command == constants.SELECT_KEY {
 			so.buildSelectQuery()
-			return so.query
+			return so.query.String()
 		}
 		if so.command == constants.UPDATE_KEY {
 			if colSize != valSize {
 				return fmt.Sprintf("EXPECTED COLUMN AGRS:%d BUT GOT:%d", colSize, valSize)
 			}
 			so.buildUpdateQuery()
-			return so.query
+			return so.query.String()
 		}
 	}
 	if strings.Contains(so.command, constants.JOIN_KEY) {
 		so.buildJoinQuery()
-		return so.query
+		return so.query.String()
 	}
 	if so.isParameterizedConditionalQuery() {
 		so.parameteredQuery(so.command, so.column[0], so.counter)
-		return so.query
+		return so.query.String()
 	}
 	if so.parameterized {
 		so.parameteredQuery(so.command, so.column[0], so.counter)
-		return so.query
+		return so.query.String()
 	}
 	if so.column[0] == "" && so.value == nil {
-		return so.query
+		return so.query.String()
 	}
 	so.normalQuery(so.command, so.column[0], so.value[0])
-	return so.query
+	return so.query.String()
 }
 
 func (so *SqlObserve) buildJoinQuery() {
@@ -131,58 +131,56 @@ func (so *SqlObserve) buildJoinQuery() {
 }
 
 func (so *SqlObserve) formatQuery(query string) {
-	so.query += " " + query
+	so.query.WriteString(" " + query)
 }
 
 func (so *SqlObserve) buildSelectQuery() {
 	size := len(so.column) - 1
-	var col string
+	var col strings.Builder
 	for i, v := range so.column {
+		col.WriteString(v)
 		if i != size {
-			col += fmt.Sprintf("%s,", v)
-		}
-		if i == size {
-			col += v
+			col.WriteString(",")
 		}
 	}
-	so.query = fmt.Sprintf("SELECT %s FROM %s", col, so.tableName)
+	so.query.WriteString(fmt.Sprintf("SELECT %s FROM %s", col.String(), so.tableName))
 }
 
 func (so *SqlObserve) buildUpdateQuery() {
 	size := len(so.column) - 1
-	var q string
+	var q strings.Builder
 	for i, v := range so.column {
 		so.sanitizeParameterPrefix(i + 1)
 		argVal := so.value[i]
+		q.WriteString(fmt.Sprintf("%s=%s", v, so.paramterPrefix))
 		if i != size {
-			q += fmt.Sprintf("%s=%s,", v, so.paramterPrefix)
-		}
-		if i == size {
-			q += fmt.Sprintf("%s=%s", v, so.paramterPrefix)
+			q.WriteString(",")
 		}
 		so.value[i] = argVal
 	}
-	so.query = fmt.Sprintf("UPDATE %s SET %s", so.tableName, q)
+	so.query.WriteString(fmt.Sprintf("UPDATE %s SET %s", so.tableName, q.String()))
 }
 
 func (so *SqlObserve) buildInsertQuery() {
 	size := len(so.column) - 1
-	col := "("
-	val := "("
+	col := strings.Builder{}
+	val := strings.Builder{}
+	col.WriteString("(")
+	val.WriteString("(")
 	for i, v := range so.column {
 		so.sanitizeParameterPrefix(i + 1)
 		argVal := so.value[i]
+		col.WriteString(v)
+		val.WriteString(so.paramterPrefix)
 		if i != size {
-			col += fmt.Sprintf("%s,", v)
-			val += fmt.Sprintf("%s,", so.paramterPrefix)
-		}
-		if i == size {
-			col += fmt.Sprintf("%s)", v)
-			val += fmt.Sprintf("%s)", so.paramterPrefix)
+			col.WriteString(",")
+			val.WriteString(",")
 		}
 		so.value[i] = argVal
 	}
-	so.query = fmt.Sprintf("INSERT INTO %s %s VALUES %s", so.tableName, col, val)
+	col.WriteString(")")
+	val.WriteString(")")
+	so.query.WriteString(fmt.Sprintf("INSERT INTO %s %s VALUES %s", so.tableName, col.String(), val.String()))
 }
 
 func (so *SqlObserve) parameteredQuery(command string, col string, num int) {
@@ -199,15 +197,18 @@ func (so *SqlObserve) parameteredQuery(command string, col string, num int) {
 
 func (so *SqlObserve) normalQuery(command string, col string, val any) {
 	q := fmt.Sprintf("%s %s=%v", command, col, val)
+	if command == constants.ORDER_BY_KEY {
+		q = fmt.Sprintf("%s %s %v", command, col, val)
+	}
 	so.value = nil
 	so.formatQuery(q)
 }
 
 func (so *SqlObserve) sanitizeParameterPrefix(num int) {
-	if so.typeSql == SqlType(MYSQL) {
+	if so.typeSql == MYSQL {
 		so.paramterPrefix = "?"
 	}
-	if so.typeSql == SqlType(PGSQL) {
+	if so.typeSql == PGSQL {
 		so.paramterPrefix = fmt.Sprintf("$%d", num)
 	}
 }
@@ -219,7 +220,6 @@ func (so *SqlObserve) isParameterizedConditionalQuery() bool {
 func (so *SqlObserve) isBaseCommandQuery() bool {
 	return querySearch(baseCommandQuery, 0, len(baseCommandQuery)-1, so.command) != -1
 }
-
 func querySearch(data []string, begin int, end int, target string) int {
 	if begin > end {
 		return -1
