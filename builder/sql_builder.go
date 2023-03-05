@@ -4,8 +4,8 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"simple-sql-builder/constants"
-	"simple-sql-builder/observable"
+	"go-simple-sql-builder/constants"
+	"go-simple-sql-builder/observable"
 	"strings"
 
 	"github.com/jackc/pgx/v5"
@@ -13,14 +13,14 @@ import (
 )
 
 type sqlBuilder[RT any, RWT any] struct {
-	ctx             context.Context
-	SqlObserve      []observable.SqlObserve
-	args            []any
 	count           int
 	called          int
 	tableName       string
 	typeSql         observable.SqlType
 	connection      any
+	ctx             context.Context
+	SqlObserve      []observable.SqlObserve
+	args            []any
 	execRowCommand  func() RT
 	execRowsCommand func() (res RWT, err error)
 }
@@ -38,9 +38,8 @@ func (sb *sqlBuilder[RT, RWT]) Insert(colAndVal map[string]any) SqlBuilder[RT, R
 	return sb.insert(colAndVal)
 }
 
-// Join implements SqlBuilder
-func (sb *sqlBuilder[RT, RWT]) Join(joinType string, target string, conditional string) SqlBuilder[RT, RWT] {
-	return sb.join(joinType, target, conditional)
+func (sb *sqlBuilder[RT, RWT]) JoinTable(joinType string, table string, conditional string) SqlBuilder[RT, RWT] {
+	return sb.joinTable(joinType, table, conditional)
 }
 
 // OrWhere implements SqlBuilder
@@ -79,6 +78,7 @@ func (sb *sqlBuilder[RT, RWT]) WhereLike(column string, value any) SqlBuilder[RT
 
 // GetArgsValue implements SqlBuilder
 func (sb *sqlBuilder[RT, RWT]) GetArgsValue() []any {
+	sb.setValues()
 	return sb.args
 }
 
@@ -93,7 +93,7 @@ type SqlBuilder[RT any, RWT any] interface {
 	OrWhere(column string, value any) SqlBuilder[RT, RWT]
 	OrderBy(column string, sort string) SqlBuilder[RT, RWT]
 	Select(col []string) SqlBuilder[RT, RWT]
-	Join(joinType string, target string, conditional string) SqlBuilder[RT, RWT]
+	JoinTable(joinType string, table string, conditional string) SqlBuilder[RT, RWT]
 	GetArgsValue() []any
 }
 
@@ -142,14 +142,19 @@ func (sb *sqlBuilder[RT, RWT]) whereLike(column string, value any) *sqlBuilder[R
 }
 
 func (sb *sqlBuilder[RT, RWT]) sqlQueryString() string {
-	var query string
+	var query strings.Builder
 	for _, v := range sb.SqlObserve {
-		query += v.GetQuery()
+		query.WriteString(v.GetQuery())
+	}
+	return query.String()
+}
+
+func (sb *sqlBuilder[RT, RWT]) setValues() {
+	for _, v := range sb.SqlObserve {
 		if v.GetValues() != nil {
 			sb.args = append(sb.args, v.GetValues()...)
 		}
 	}
-	return query
 }
 
 func (sb *sqlBuilder[RT, RWT]) registerObserve(so observable.SqlObserve) {
@@ -212,8 +217,8 @@ func (sb *sqlBuilder[RT, RWT]) selectSql(col []string) *sqlBuilder[RT, RWT] {
 	return sb
 }
 
-func (sb *sqlBuilder[RT, RWT]) join(joinType string, target string, conditional string) *sqlBuilder[RT, RWT] {
-	so := observable.NewSqlObserve(fmt.Sprintf("%s %s", strings.ToUpper(joinType), constants.JOIN_KEY), sb.typeSql, sb.tableName, false, 0, 0)
+func (sb *sqlBuilder[RT, RWT]) joinTable(joinType string, table string, conditional string) *sqlBuilder[RT, RWT] {
+	so := observable.NewSqlObserve(fmt.Sprintf("%s %s", strings.ToUpper(joinType), constants.JOIN_KEY), sb.typeSql, table, false, 0, 0)
 	so.SetValue(conditional)
 	sb.registerObserve(so)
 	return sb
