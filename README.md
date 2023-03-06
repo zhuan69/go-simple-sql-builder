@@ -14,7 +14,7 @@ Simple Sql Builder
 <p align="center">
   <a href="#about">About</a> &#xa0; | &#xa0; 
   <a href="#features">Features</a> &#xa0; | &#xa0;
-  <a href="#technologies">Technologies</a> &#xa0; | &#xa0;
+<!--   <a href="#technologies">Technologies</a> &#xa0; | &#xa0; -->
   <a href="#requirements">Requirements</a> &#xa0; | &#xa0;
   <a href="#starting">Starting</a> &#xa0; | &#xa0;
   <a href="#license">License</a> &#xa0; | &#xa0;
@@ -37,7 +37,7 @@ A Simple Query Builder for Mysql and PostgreSQL, that help you to not manualy wr
 >- Get Args Values for Parameterized Query
 >- Auto Parameterized On Conditional Query Like `where` and etc
 
-## Technologies ##
+<!-- ## Technologies ##
 
 The following tools were used in this project:
 
@@ -45,7 +45,7 @@ The following tools were used in this project:
 - [Node.js](https://nodejs.org/en/)
 - [React](https://pt-br.reactjs.org/)
 - [React Native](https://reactnative.dev/)
-- [TypeScript](https://www.typescriptlang.org/)
+- [TypeScript](https://www.typescriptlang.org/) -->
 
 ## Requirements ##
 
