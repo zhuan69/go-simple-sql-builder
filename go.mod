@@ -1,4 +1,4 @@
-module go-simple-sql-builder
+module github.com/zhuan69/go-simple-sql-builder
 
 go 1.19
 

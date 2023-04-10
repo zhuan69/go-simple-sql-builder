@@ -4,9 +4,10 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"go-simple-sql-builder/constants"
-	"go-simple-sql-builder/observable"
 	"strings"
+
+	constants "github.com/zhuan69/go-simple-sql-builder/constants"
+	observable "github.com/zhuan69/go-simple-sql-builder/observable"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"

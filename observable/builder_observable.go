@@ -2,8 +2,9 @@ package observable
 
 import (
 	"fmt"
-	"go-simple-sql-builder/constants"
 	"strings"
+
+	constants "github.com/zhuan69/go-simple-sql-builder/constants"
 )
 
 type SqlType string

@@ -2,10 +2,11 @@ package builder_test
 
 import (
 	"context"
-	"go-simple-sql-builder/builder"
 	"strings"
 	"testing"
 	"time"
+
+	builder "github.com/zhuan69/go-simple-sql-builder/builder"
 
 	"github.com/stretchr/testify/assert"
 )

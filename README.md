@@ -55,7 +55,7 @@ Before starting, you need to have [Git](https://git-scm.com) and [Golang 1.19 +]
 
 ```bash
 # Clone this project
-$ git clone https://github.com/zhuan69/go-simple-sql-builder
+$ git clone https://github.com/zhuan69/go-simple-sql-builder/
 
 # Access
 $ cd go-simple-sql-builder
